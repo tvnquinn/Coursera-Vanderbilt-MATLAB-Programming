@@ -2,55 +2,81 @@
 
 Personal adaptive training tracker for a Nov 8 half marathon (sub-2 stretch goal).
 
+Hosted on **Vercel** with **Supabase** so you can open it from anywhere (phone, travel, Chicago, Italy).
+
 ## What it does
 
 - Stores your **15-week plan** (Chicago + Italy constraints baked in)
 - Syncs **detailed run stats** from Strava (distance, pace, HR, elevation, splits, calories)
 - Matches runs to planned sessions and tracks weekly mileage
 - Retunes **easy-pace guidance** from recent runs
-- Emits **active recommendations** / plan-change signals (hold mileage, ease pace, delay quality, etc.)
-- Exports an **.ics calendar** of all planned sessions for Apple/Google Calendar reminders
+- Emits **active recommendations** / plan-change signals
+- Exports an **.ics calendar** of all planned sessions
 
-Works in **seed mode** without Strava (loads runs derived from your recent Apple Fitness history) so the UI is usable immediately.
+## Deploy (recommended): Vercel + Supabase
 
-## Quick start
+### 1. Create Supabase tables
+
+In your Supabase project → **SQL Editor**, run:
+
+[`supabase/schema.sql`](./supabase/schema.sql)
+
+### 2. Deploy the app on Vercel
+
+From this folder:
 
 ```bash
 cd running-coach
+npx vercel
+```
+
+Or in the Vercel dashboard: **Add New Project** → import this repo → set **Root Directory** to `running-coach`.
+
+### 3. Set environment variables (Vercel → Settings → Environment Variables)
+
+| Name | Value |
+|------|--------|
+| `SUPABASE_URL` | `https://YOUR_PROJECT.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role key (server only) |
+| `STRAVA_CLIENT_ID` | from Strava API settings |
+| `STRAVA_CLIENT_SECRET` | from Strava API settings |
+| `STRAVA_REDIRECT_URI` | `https://YOUR_VERCEL_DOMAIN/api/strava/callback` |
+| `NEXT_PUBLIC_APP_URL` | `https://YOUR_VERCEL_DOMAIN` |
+
+Redeploy after saving env vars.
+
+### 4. Point Strava at your live URL
+
+In [Strava API settings](https://www.strava.com/settings/api):
+
+- **Authorization Callback Domain**: your Vercel domain (e.g. `sub2-coach.vercel.app`)
+- Callback path used by the app: `/api/strava/callback`
+
+### 5. First use on the live site
+
+1. Open the Vercel URL on your phone
+2. Tap **Connect Strava**
+3. Tap **Sync runs**
+4. Tap **Add to calendar** for reminders
+
+You can now use it away from home — data lives in Supabase, not on your laptop.
+
+## Local development
+
+```bash
+cd running-coach
+cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-Click **Sync runs** once to load seed history (or after connecting Strava).
-
-## Connect Strava
-
-1. Create an API app at [https://www.strava.com/settings/api](https://www.strava.com/settings/api)
-2. Set Authorization Callback Domain / redirect to your app, e.g. `http://localhost:3000/api/strava/callback`
-3. Copy `.env.example` → `.env.local` and fill:
-
-```bash
-STRAVA_CLIENT_ID=...
-STRAVA_CLIENT_SECRET=...
-STRAVA_REDIRECT_URI=http://localhost:3000/api/strava/callback
-```
-
-4. Click **Connect Strava** in the UI, then **Sync runs**
-
-Tokens are stored locally in `data/strava-tokens.json` (gitignored).
-
-## Calendar reminders
-
-Click **Add to calendar** or open `/api/calendar` to download `half-marathon-plan.ics`.
-
-Import into Apple Calendar or Google Calendar.
+- Without Supabase env vars, the app falls back to local `data/runs.json` (fine for laptop-only testing).
+- With Supabase env vars locally, it uses the same cloud DB as production.
 
 ## OpenClaw (optional)
 
-If workouts land as files in OpenClaw drops, you can later point a watcher at those files and POST normalized activities into the same `data/runs.json` store. Strava remains the preferred source of truth for a stable UI.
+`POST /api/openclaw/ingest` accepts a run JSON (or array) and upserts into the same store.
 
 ## Plan source
 
-Edit `data/plan.json` to change weekly mileage, sessions, or pace defaults. The coach engine reads this on every `/api/coach` load.
+Edit `data/plan.json` to change weekly mileage, sessions, or pace defaults. Redeploy (or run locally) after edits.

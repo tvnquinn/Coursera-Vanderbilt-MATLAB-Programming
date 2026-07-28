@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { seedRuns } from "@/lib/seed-runs";
-import { loadRuns, loadTokens, upsertRuns } from "@/lib/storage";
+import { loadRuns, loadTokens, storageMode, upsertRuns } from "@/lib/storage";
 import { fetchRecentRuns, stravaConfigured } from "@/lib/strava";
+import { supabaseConfigured } from "@/lib/supabase";
 
 export async function POST() {
   try {
@@ -14,6 +15,7 @@ export async function POST() {
         source: "strava",
         imported: runs.length,
         total: merged.length,
+        storage: storageMode(),
       });
     }
 
@@ -24,6 +26,7 @@ export async function POST() {
         source: "seed",
         imported: seedRuns.length,
         total: merged.length,
+        storage: storageMode(),
         message: "Loaded demo runs from your recent Apple Fitness history. Connect Strava for live sync.",
       });
     }
@@ -32,6 +35,7 @@ export async function POST() {
       source: "existing",
       imported: 0,
       total: existing.length,
+      storage: storageMode(),
       message: tokens
         ? "Strava tokens present but client env is missing."
         : "Using stored runs. Connect Strava for automatic updates.",
@@ -52,5 +56,7 @@ export async function GET() {
     total: runs.length,
     stravaConnected: Boolean(tokens),
     stravaConfigured: stravaConfigured(),
+    supabaseConfigured: supabaseConfigured(),
+    storage: storageMode(),
   });
 }

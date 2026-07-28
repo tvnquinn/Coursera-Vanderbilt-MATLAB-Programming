@@ -8,6 +8,11 @@ interface CoachPayload {
   plan: TrainingPlan;
   report: CoachReport;
   runs: RunActivity[];
+  meta?: {
+    storage: "supabase" | "local";
+    supabaseConfigured: boolean;
+    stravaConfigured: boolean;
+  };
 }
 
 function priorityClass(priority: string) {
@@ -288,9 +293,9 @@ export function Dashboard() {
           </li>
         </ol>
         <p className="muted">
-          Stored runs: {runs.length}. Goal: {plan.athlete.goalTime} ({paceToString(
-            plan.athlete.goalPaceSecPerMi,
-          )}
+          Stored runs: {runs.length}. Storage: {data.meta?.storage ?? "local"}
+          {data.meta?.supabaseConfigured ? " (Supabase)" : ""}. Goal:{" "}
+          {plan.athlete.goalTime} ({paceToString(plan.athlete.goalPaceSecPerMi)}
           /mi). Prior half: {plan.athlete.priorHalf}.
         </p>
       </section>

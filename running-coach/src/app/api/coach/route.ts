@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { buildCoachReport } from "@/lib/coach";
 import { seedRuns } from "@/lib/seed-runs";
-import { loadPlan, loadRuns, upsertRuns } from "@/lib/storage";
+import { loadPlan, loadRuns, storageMode, upsertRuns } from "@/lib/storage";
+import { supabaseConfigured } from "@/lib/supabase";
+import { stravaConfigured } from "@/lib/strava";
 
 export async function GET() {
   const plan = await loadPlan();
@@ -10,5 +12,14 @@ export async function GET() {
     runs = await upsertRuns(seedRuns);
   }
   const report = buildCoachReport(plan, runs);
-  return NextResponse.json({ plan, report, runs });
+  return NextResponse.json({
+    plan,
+    report,
+    runs,
+    meta: {
+      storage: storageMode(),
+      supabaseConfigured: supabaseConfigured(),
+      stravaConfigured: stravaConfigured(),
+    },
+  });
 }

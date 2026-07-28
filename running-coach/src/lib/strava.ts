@@ -12,10 +12,21 @@ export function stravaConfigured(): boolean {
   return Boolean(process.env.STRAVA_CLIENT_ID && process.env.STRAVA_CLIENT_SECRET);
 }
 
+export function getStravaRedirectUri(): string {
+  if (process.env.STRAVA_REDIRECT_URI) return process.env.STRAVA_REDIRECT_URI;
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/strava/callback`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/api/strava/callback`;
+  }
+  return "http://localhost:3000/api/strava/callback";
+}
+
 export function getAuthorizeUrl(state = "runcoach"): string {
   const params = new URLSearchParams({
     client_id: process.env.STRAVA_CLIENT_ID || "",
-    redirect_uri: process.env.STRAVA_REDIRECT_URI || "http://localhost:3000/api/strava/callback",
+    redirect_uri: getStravaRedirectUri(),
     response_type: "code",
     approval_prompt: "auto",
     scope: "read,activity:read_all",
